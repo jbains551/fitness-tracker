@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore, useTheme } from './lib/store.js';
+import { useSync } from './lib/sync.js';
+import SettingsSheet, { SyncStatusDot } from './components/SettingsSheet.jsx';
 import Dashboard from './views/Dashboard.jsx';
 import FoodLogger from './views/FoodLogger.jsx';
 import Workout from './views/Workout.jsx';
@@ -19,8 +21,10 @@ const TABS = [
 export default function App() {
   const store = useStore();
   const { theme, toggle } = useTheme();
+  const sync = useSync({ store });
   const [tab, setTab] = useState('dashboard');
   const [now, setNow] = useState(() => new Date());
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
@@ -37,15 +41,31 @@ export default function App() {
               {now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
             </p>
           </div>
-          <button
-            onClick={toggle}
-            className="size-10 rounded-full flex items-center justify-center text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 transition-colors active:scale-95"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="size-10 rounded-full flex items-center justify-center text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 transition-colors active:scale-95 relative"
+              aria-label="Settings"
+            >
+              <GearIcon />
+              {sync.token && (
+                <span className="absolute bottom-1.5 right-1.5">
+                  <SyncStatusDot status={sync.status} />
+                </span>
+              )}
+            </button>
+            <button
+              onClick={toggle}
+              className="size-10 rounded-full flex items-center justify-center text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 transition-colors active:scale-95"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+          </div>
         </div>
       </header>
+
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} sync={sync} />
 
       <main className="flex-1 px-4 pt-4 pb-32">
         {tab === 'dashboard' && <Dashboard store={store} now={now} />}
@@ -141,6 +161,14 @@ function CalendarIcon() {
       <path d="M3 10h18" />
       <path d="M8 3v4" />
       <path d="M16 3v4" />
+    </svg>
+  );
+}
+function GearIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008.92 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 8.92a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>
   );
 }

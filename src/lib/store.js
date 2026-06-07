@@ -148,6 +148,10 @@ export function useStore() {
     });
   }, []);
 
+  const replaceState = useCallback((next) => {
+    setState(ensureBody({ ...DEFAULT_STATE, ...(next || {}) }));
+  }, []);
+
   return {
     state,
     addFood,
@@ -161,6 +165,7 @@ export function useStore() {
     setGoals,
     setWeightUnit,
     setTrendDays,
+    replaceState,
   };
 }
 
