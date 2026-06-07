@@ -28,10 +28,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    const modelMessages = await convertToModelMessages(messages);
     const result = streamText({
       model: 'anthropic/claude-haiku-4-5',
       system: SYSTEM_PROMPT,
-      messages: convertToModelMessages(messages),
+      messages: modelMessages,
     });
 
     result.pipeUIMessageStreamToResponse(res, {
