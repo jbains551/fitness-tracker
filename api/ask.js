@@ -13,30 +13,18 @@ Guidelines:
 - Format with light Markdown when it helps (short lists, bold key terms). Avoid heavy formatting for short answers.
 - You do not have access to the user's logged data.`;
 
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'method not allowed' }), {
-      status: 405,
-      headers: { 'content-type': 'application/json' },
-    });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'method not allowed' });
+    return;
   }
 
-  let messages;
-  try {
-    const body = await request.json();
-    messages = body.messages;
-  } catch {
-    return new Response(JSON.stringify({ error: 'invalid json' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
-  }
+  const body = req.body ?? {};
+  const messages = Array.isArray(body) ? body : body.messages;
 
   if (!Array.isArray(messages) || messages.length === 0) {
-    return new Response(JSON.stringify({ error: 'messages required' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
+    res.status(400).json({ error: 'messages required' });
+    return;
   }
 
   try {
@@ -46,20 +34,17 @@ export default async function handler(request) {
       messages: convertToModelMessages(messages),
     });
 
-    return result.toUIMessageStreamResponse({
+    result.pipeUIMessageStreamToResponse(res, {
       onError: (error) => {
-        console.error('streamText error:', error);
-        return error instanceof Error ? error.message : 'Unknown error';
+        console.error('stream error:', error);
+        return error instanceof Error ? error.message : String(error);
       },
     });
   } catch (error) {
     console.error('handler error:', error);
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
-        hint: 'If this mentions AI Gateway, enable it in your Vercel project (vercel.com → project → AI Gateway tab) or set AI_GATEWAY_API_KEY.',
-      }),
-      { status: 500, headers: { 'content-type': 'application/json' } }
-    );
+    res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+      hint: 'If this mentions AI Gateway, enable it in your Vercel project (Project → AI Gateway tab) or set AI_GATEWAY_API_KEY.',
+    });
   }
 }
