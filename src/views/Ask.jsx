@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
+import { useAuth } from '@clerk/clerk-react';
 
 const STORAGE_KEY = 'ft_ask_messages_v1';
 
@@ -29,11 +30,21 @@ function saveMessages(messages) {
 }
 
 export default function Ask() {
+  const { getToken } = useAuth();
   const [input, setInput] = useState('');
   const [initial] = useState(loadMessages);
 
   const { messages, sendMessage, status, error, setMessages, stop } = useChat({
-    transport: new DefaultChatTransport({ api: '/api/ask' }),
+    transport: new DefaultChatTransport({
+      api: '/api/ask',
+      fetch: async (url, init) => {
+        const token = await getToken();
+        return fetch(url, {
+          ...init,
+          headers: { ...(init?.headers || {}), authorization: `Bearer ${token}` },
+        });
+      },
+    }),
     messages: initial,
   });
 

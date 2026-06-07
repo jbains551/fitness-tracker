@@ -1,4 +1,5 @@
 import { streamText, convertToModelMessages } from 'ai';
+import { getUserIdFromRequest } from './_clerk.js';
 
 export const config = { runtime: 'nodejs' };
 
@@ -16,6 +17,18 @@ Guidelines:
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method not allowed' });
+    return;
+  }
+
+  let userId;
+  try {
+    userId = await getUserIdFromRequest(req);
+  } catch (err) {
+    res.status(500).json({ error: 'auth misconfigured', detail: String(err?.message || err) });
+    return;
+  }
+  if (!userId) {
+    res.status(401).json({ error: 'unauthorized' });
     return;
   }
 

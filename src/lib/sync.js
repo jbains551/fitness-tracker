@@ -1,36 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 
-const TOKEN_KEY = 'ft_sync_token';
-
-export function loadToken() {
-  try {
-    return localStorage.getItem(TOKEN_KEY) || '';
-  } catch {
-    return '';
-  }
-}
-
-export function saveToken(token) {
-  try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {}
-}
-
-export function generateToken() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID().replace(/-/g, '');
-  }
-  return Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-const TOKEN_PATTERN = /^[a-zA-Z0-9_-]{16,128}$/;
-export function isValidToken(t) {
-  return typeof t === 'string' && TOKEN_PATTERN.test(t.trim());
-}
+const LEGACY_TOKEN_KEY = 'ft_sync_token';
+const MIGRATED_FLAG_KEY_PREFIX = 'ft_migrated_for_';
 
 export function useSync({ store }) {
-  const [token, setTokenState] = useState(loadToken);
+  const { isLoaded, isSignedIn, userId, getToken } = useAuth();
+
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
@@ -39,58 +15,31 @@ export function useSync({ store }) {
   const lastVersionRef = useRef(0);
   const debounceTimerRef = useRef(null);
   const initialPullDoneRef = useRef(false);
-  const inFlightRef = useRef(0);
 
-  const setToken = useCallback((next) => {
-    saveToken(next);
-    setTokenState(next);
-    initialPullDoneRef.current = false;
-    lastPushedRef.current = null;
-    lastVersionRef.current = 0;
-    setError(null);
-    setStatus('idle');
-  }, []);
-
-  const pull = useCallback(async () => {
-    if (!token || !isValidToken(token)) return;
-    inFlightRef.current++;
-    setStatus('syncing');
-    try {
-      const res = await fetch(`/api/state?token=${encodeURIComponent(token)}`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `HTTP ${res.status}`);
-      }
-      const body = await res.json();
-      if (body.state) {
-        store.replaceState(body.state);
-        lastPushedRef.current = JSON.stringify(body.state);
-        lastVersionRef.current = body.version || 0;
-      }
-      initialPullDoneRef.current = true;
-      setError(null);
-      setLastSyncedAt(Date.now());
-      setStatus('ok');
-    } catch (err) {
-      setError(err.message || String(err));
-      setStatus('error');
-    } finally {
-      inFlightRef.current--;
-    }
-  }, [token, store]);
+  const authedFetch = useCallback(
+    async (url, init = {}) => {
+      const token = await getToken();
+      return fetch(url, {
+        ...init,
+        headers: {
+          ...(init.headers || {}),
+          authorization: `Bearer ${token}`,
+        },
+      });
+    },
+    [getToken]
+  );
 
   const pushNow = useCallback(async () => {
-    if (!token || !isValidToken(token)) return;
-    if (!initialPullDoneRef.current) return;
+    if (!isSignedIn) return;
     const serialized = JSON.stringify(store.state);
     if (serialized === lastPushedRef.current) return;
-    inFlightRef.current++;
     setStatus('syncing');
     try {
-      const res = await fetch('/api/state', {
+      const res = await authedFetch('/api/state', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ token, state: store.state }),
+        body: JSON.stringify({ state: store.state }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -105,43 +54,131 @@ export function useSync({ store }) {
     } catch (err) {
       setError(err.message || String(err));
       setStatus('error');
-    } finally {
-      inFlightRef.current--;
     }
-  }, [token, store]);
+  }, [authedFetch, isSignedIn, store]);
+
+  const runMigration = useCallback(async () => {
+    if (!userId) return null;
+    const migratedKey = MIGRATED_FLAG_KEY_PREFIX + userId;
+    if (localStorage.getItem(migratedKey)) return null;
+
+    const legacyToken = localStorage.getItem(LEGACY_TOKEN_KEY);
+    let legacyState = null;
+    if (legacyToken) {
+      try {
+        const res = await fetch(`/api/state?token=${encodeURIComponent(legacyToken)}`);
+        if (res.ok) {
+          const body = await res.json();
+          if (body.state) legacyState = body.state;
+        }
+      } catch {}
+    }
+
+    const localState = !isStateEmpty(store.state) ? store.state : null;
+    const winner = pickRicherState(localState, legacyState);
+
+    localStorage.setItem(migratedKey, String(Date.now()));
+    if (legacyToken) localStorage.removeItem(LEGACY_TOKEN_KEY);
+
+    return winner;
+  }, [userId, store]);
+
+  const pull = useCallback(async () => {
+    if (!isSignedIn) return;
+    setStatus('syncing');
+    try {
+      const res = await authedFetch('/api/state');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      const body = await res.json();
+
+      if (body.state) {
+        store.replaceState(body.state);
+        lastPushedRef.current = JSON.stringify(body.state);
+        lastVersionRef.current = body.version || 0;
+        initialPullDoneRef.current = true;
+        setError(null);
+        setLastSyncedAt(Date.now());
+        setStatus('ok');
+        return;
+      }
+
+      const migrated = await runMigration();
+      if (migrated) {
+        store.replaceState(migrated);
+        initialPullDoneRef.current = true;
+        await pushNow();
+      } else {
+        initialPullDoneRef.current = true;
+        setError(null);
+        setLastSyncedAt(Date.now());
+        setStatus('ok');
+      }
+    } catch (err) {
+      setError(err.message || String(err));
+      setStatus('error');
+    }
+  }, [authedFetch, isSignedIn, store, runMigration, pushNow]);
 
   useEffect(() => {
-    if (token) pull();
-  }, [token, pull]);
+    if (isLoaded && isSignedIn) pull();
+  }, [isLoaded, isSignedIn, pull]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isSignedIn) return;
     const onFocus = () => pull();
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', () => {
+    const onVisible = () => {
       if (document.visibilityState === 'visible') pull();
-    });
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [token, pull]);
+  }, [isSignedIn, pull]);
 
   useEffect(() => {
-    if (!token || !initialPullDoneRef.current) return;
+    if (!isSignedIn || !initialPullDoneRef.current) return;
     clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
       pushNow();
     }, 1500);
     return () => clearTimeout(debounceTimerRef.current);
-  }, [store.state, token, pushNow]);
+  }, [store.state, isSignedIn, pushNow]);
 
   return {
-    token,
-    setToken,
     status,
     error,
     lastSyncedAt,
-    pull,
-    pushNow,
+    isSignedIn: !!isSignedIn,
   };
+}
+
+function isStateEmpty(state) {
+  if (!state) return true;
+  if (Object.keys(state.foods || {}).length > 0) return false;
+  if (Object.keys(state.workouts || {}).length > 0) return false;
+  if ((state.customFoods || []).length > 0) return false;
+  if (Object.keys(state.body?.measurements || {}).length > 0) return false;
+  return true;
+}
+
+function scoreState(state) {
+  if (!state) return -1;
+  return (
+    Object.keys(state.foods || {}).length +
+    Object.keys(state.workouts || {}).length +
+    (state.customFoods || []).length +
+    Object.keys(state.body?.measurements || {}).length
+  );
+}
+
+function pickRicherState(a, b) {
+  if (!a && !b) return null;
+  if (!a) return b;
+  if (!b) return a;
+  return scoreState(a) >= scoreState(b) ? a : b;
 }

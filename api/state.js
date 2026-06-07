@@ -1,9 +1,10 @@
 import { Redis } from '@upstash/redis';
+import { getUserIdFromRequest } from './_clerk.js';
 
 export const config = { runtime: 'nodejs' };
 
 const MAX_BODY_BYTES = 256 * 1024;
-const TOKEN_PATTERN = /^[a-zA-Z0-9_-]{16,128}$/;
+const LEGACY_TOKEN_PATTERN = /^[a-zA-Z0-9_-]{16,128}$/;
 
 function getRedis() {
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
@@ -25,12 +26,29 @@ export default async function handler(req, res) {
     });
   }
 
-  const token = (req.method === 'GET' ? req.query.token : req.body?.token)?.toString();
-  if (!token || !TOKEN_PATTERN.test(token)) {
-    return send(res, 400, { error: 'invalid or missing token' });
+  let userId;
+  try {
+    userId = await getUserIdFromRequest(req);
+  } catch (err) {
+    return send(res, 500, { error: 'auth misconfigured', detail: String(err?.message || err) });
   }
 
-  const key = `ft:state:${token}`;
+  if (userId) {
+    return handleAuthed(req, res, redis, userId);
+  }
+
+  if (req.method === 'GET') {
+    const token = req.query.token?.toString();
+    if (token && LEGACY_TOKEN_PATTERN.test(token)) {
+      return handleLegacyGet(req, res, redis, token);
+    }
+  }
+
+  return send(res, 401, { error: 'unauthorized' });
+}
+
+async function handleAuthed(req, res, redis, userId) {
+  const key = `ft:state:user:${userId}`;
 
   if (req.method === 'GET') {
     try {
@@ -65,4 +83,16 @@ export default async function handler(req, res) {
   }
 
   return send(res, 405, { error: 'method not allowed' });
+}
+
+async function handleLegacyGet(req, res, redis, token) {
+  const key = `ft:state:${token}`;
+  try {
+    const stored = await redis.get(key);
+    if (!stored) return send(res, 200, { state: null, version: 0, legacy: true });
+    return send(res, 200, { ...stored, legacy: true });
+  } catch (err) {
+    console.error('redis legacy get error:', err);
+    return send(res, 500, { error: 'redis error', detail: String(err?.message || err) });
+  }
 }
