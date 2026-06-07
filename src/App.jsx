@@ -5,12 +5,14 @@ import FoodLogger from './views/FoodLogger.jsx';
 import Supplements from './views/Supplements.jsx';
 import Workout from './views/Workout.jsx';
 import Weekly from './views/Weekly.jsx';
+import Body from './views/Body.jsx';
 
 const TABS = [
   { id: 'dashboard', label: 'Today', icon: HomeIcon },
   { id: 'food', label: 'Food', icon: ForkIcon },
   { id: 'supps', label: 'Supps', icon: PillIcon },
   { id: 'workout', label: 'Workout', icon: DumbbellIcon },
+  { id: 'body', label: 'Body', icon: ScaleIcon },
   { id: 'week', label: 'Week', icon: CalendarIcon },
 ];
 
@@ -50,6 +52,7 @@ export default function App() {
         {tab === 'food' && <FoodLogger store={store} now={now} />}
         {tab === 'supps' && <Supplements store={store} now={now} />}
         {tab === 'workout' && <Workout store={store} now={now} />}
+        {tab === 'body' && <Body store={store} now={now} />}
         {tab === 'week' && <Weekly store={store} now={now} />}
       </main>
 
@@ -57,7 +60,7 @@ export default function App() {
         className="fixed bottom-0 inset-x-0 z-20 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/95 dark:bg-neutral-950/95 backdrop-blur"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="max-w-xl mx-auto grid grid-cols-5">
+        <div className="max-w-xl mx-auto grid grid-cols-6">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -117,6 +120,16 @@ function DumbbellIcon() {
       <path d="M18 7v10" />
       <path d="M21 9v6" />
       <path d="M6 12h12" />
+    </svg>
+  );
+}
+function ScaleIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="3" />
+      <path d="M8 8h8" />
+      <circle cx="12" cy="14" r="3" />
+      <path d="M12 12v2l1.5 1" />
     </svg>
   );
 }

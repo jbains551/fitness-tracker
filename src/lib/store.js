@@ -7,14 +7,24 @@ const DEFAULT_STATE = {
   supps: {},
   workouts: {},
   customFoods: [],
+  body: {
+    measurements: {},
+    goals: { weight: '', bodyFat: '', water: '', visceral: '' },
+    settings: { weightUnit: 'lb' },
+  },
 };
+
+function ensureBody(s) {
+  if (s.body && s.body.measurements && s.body.goals && s.body.settings) return s;
+  return { ...s, body: { ...DEFAULT_STATE.body, ...(s.body || {}) } };
+}
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_STATE };
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_STATE, ...parsed };
+    return ensureBody({ ...DEFAULT_STATE, ...parsed });
   } catch {
     return { ...DEFAULT_STATE };
   }
@@ -92,6 +102,52 @@ export function useStore() {
     setState((s) => ({ ...s, customFoods: s.customFoods.filter((f) => f.id !== id) }));
   }, []);
 
+  const setMeasurement = useCallback((dateKey, measurement) => {
+    setState((s) => {
+      const base = ensureBody(s);
+      const cleaned = {};
+      for (const k of ['weight', 'bodyFat', 'water', 'visceral']) {
+        const v = measurement[k];
+        if (v === '' || v === null || v === undefined) continue;
+        const n = Number(v);
+        if (Number.isFinite(n)) cleaned[k] = n;
+      }
+      return {
+        ...base,
+        body: {
+          ...base.body,
+          measurements: {
+            ...base.body.measurements,
+            [dateKey]: { ...cleaned, ts: Date.now() },
+          },
+        },
+      };
+    });
+  }, []);
+
+  const removeMeasurement = useCallback((dateKey) => {
+    setState((s) => {
+      const base = ensureBody(s);
+      const next = { ...base.body.measurements };
+      delete next[dateKey];
+      return { ...base, body: { ...base.body, measurements: next } };
+    });
+  }, []);
+
+  const setGoals = useCallback((goals) => {
+    setState((s) => {
+      const base = ensureBody(s);
+      return { ...base, body: { ...base.body, goals: { ...base.body.goals, ...goals } } };
+    });
+  }, []);
+
+  const setWeightUnit = useCallback((unit) => {
+    setState((s) => {
+      const base = ensureBody(s);
+      return { ...base, body: { ...base.body, settings: { ...base.body.settings, weightUnit: unit } } };
+    });
+  }, []);
+
   return {
     state,
     addFood,
@@ -101,6 +157,10 @@ export function useStore() {
     removeWorkout,
     addCustomFood,
     removeCustomFood,
+    setMeasurement,
+    removeMeasurement,
+    setGoals,
+    setWeightUnit,
   };
 }
 
