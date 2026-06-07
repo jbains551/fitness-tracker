@@ -38,17 +38,12 @@ export default function Dashboard({ store, now }) {
       <section className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 shadow-sm">
         <div className="flex items-baseline justify-between mb-3 gap-3">
           <h2 className="font-semibold">Macros</h2>
-          <div className="flex items-baseline gap-3">
-            <span className="text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-              {Math.round(totals.cal)} / {target.cal} cal
-            </span>
-            <button
-              onClick={() => setGoalsOpen(true)}
-              className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-            >
-              Edit
-            </button>
-          </div>
+          <button
+            onClick={() => setGoalsOpen(true)}
+            className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+          >
+            Edit
+          </button>
         </div>
         <div className="space-y-3">
           <MacroBar label="Calories" value={totals.cal} target={target.cal} unit="" color="emerald" />
