@@ -5,9 +5,9 @@ A mobile-first fitness and nutrition tracking web app. All data is stored locall
 ## Features
 - **Daily Dashboard** with day-of-week-aware macro targets (training / rest / optional days) and live progress bars
 - **Food Logger** with quick-add common meals, custom entries, and per-meal grouping
-- **Supplement Checklist** that resets at midnight and hides pre-workout supps on rest days
 - **Workout Log** for type, duration, perceived effort, and notes — plus the last 7 days
-- **Weekly Summary** with protein-hit / workout / supplement-completion at a glance and a protein streak counter
+- **Body Tracking** for weight / body fat / water / visceral fat from your Withings scale, with per-metric goals and a 30-day actual-vs-goal trend chart
+- **Weekly Summary** with protein-hit / workout completion at a glance and a protein streak counter
 - **Dark mode**, bottom nav, one-handed mobile layout
 
 ## Stack

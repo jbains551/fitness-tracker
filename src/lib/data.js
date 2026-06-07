@@ -12,26 +12,4 @@ export const QUICK_FOODS = [
 
 export const MEALS = ['breakfast', 'pre-workout', 'post-workout', 'lunch', 'dinner', 'snack'];
 
-export const SUPPLEMENTS = {
-  morning: [
-    { id: 'vit_d3', name: 'Vitamin D3', dose: '5000 IU' },
-    { id: 'k2', name: 'Vitamin K2', dose: '100 mcg' },
-    { id: 'fish_oil', name: 'Fish Oil', dose: '2 g' },
-    { id: 'zinc', name: 'Zinc', dose: '15 mg' },
-  ],
-  preworkout: [
-    { id: 'creatine', name: 'Creatine', dose: '5 g' },
-    { id: 'caffeine', name: 'Caffeine', dose: '' },
-  ],
-  afternoon: [
-    { id: 'berberine', name: 'Berberine', dose: '500 mg' },
-    { id: 'gte', name: 'Green Tea Extract', dose: '400 mg' },
-    { id: 'l_carnitine', name: 'L-Carnitine', dose: '1 g' },
-  ],
-  bedtime: [
-    { id: 'magnesium', name: 'Magnesium Glycinate', dose: '400 mg' },
-    { id: 'ashwagandha', name: 'Ashwagandha', dose: '600 mg' },
-  ],
-};
-
 export const WORKOUT_TYPES = ['HIIT', 'Zone 2', 'Strength', 'Rest'];

@@ -4,7 +4,6 @@ const KEY = 'ft_state_v1';
 
 const DEFAULT_STATE = {
   foods: {},
-  supps: {},
   workouts: {},
   customFoods: [],
   body: {
@@ -61,19 +60,6 @@ export function useStore() {
         [dateKey]: (s.foods[dateKey] || []).filter((e) => e.id !== id),
       },
     }));
-  }, []);
-
-  const toggleSupp = useCallback((dateKey, suppId) => {
-    setState((s) => {
-      const day = s.supps[dateKey] || {};
-      return {
-        ...s,
-        supps: {
-          ...s.supps,
-          [dateKey]: { ...day, [suppId]: !day[suppId] },
-        },
-      };
-    });
   }, []);
 
   const setWorkout = useCallback((dateKey, workout) => {
@@ -152,7 +138,6 @@ export function useStore() {
     state,
     addFood,
     removeFood,
-    toggleSupp,
     setWorkout,
     removeWorkout,
     addCustomFood,

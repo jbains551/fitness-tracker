@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { dayKind, targetFor, todayKey, sumMacros, clampPct } from '../lib/utils.js';
-import { SUPPLEMENTS } from '../lib/data.js';
 import BodyChart from '../components/BodyChart.jsx';
 
 export default function Dashboard({ store, now }) {
@@ -12,12 +11,6 @@ export default function Dashboard({ store, now }) {
   const entries = store.state.foods[key] || [];
   const totals = useMemo(() => sumMacros(entries), [entries]);
   const workout = store.state.workouts[key];
-
-  const suppsToday = store.state.supps[key] || {};
-  const suppGroups = ['morning', kind === 'training' ? 'preworkout' : null, 'afternoon', 'bedtime'].filter(Boolean);
-  const allSupps = suppGroups.flatMap((g) => SUPPLEMENTS[g]);
-  const suppDone = allSupps.filter((s) => suppsToday[s.id]).length;
-  const suppPct = allSupps.length ? Math.round((suppDone / allSupps.length) * 100) : 0;
 
   const body = store.state.body;
   const weightUnit = body.settings.weightUnit;
@@ -52,20 +45,12 @@ export default function Dashboard({ store, now }) {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          title="Workout"
-          value={workout ? workout.type : '—'}
-          sub={workout ? `${workout.duration || 0} min · RPE ${workout.effort || '?'}` : 'Not logged'}
-          good={!!workout}
-        />
-        <StatCard
-          title="Supplements"
-          value={`${suppDone}/${allSupps.length}`}
-          sub={`${suppPct}% complete`}
-          good={suppPct === 100}
-        />
-      </div>
+      <StatCard
+        title="Workout"
+        value={workout ? workout.type : '—'}
+        sub={workout ? `${workout.duration || 0} min · RPE ${workout.effort || '?'}` : 'Not logged'}
+        good={!!workout}
+      />
 
       <section className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 shadow-sm">
         <div className="flex items-baseline justify-between mb-3">

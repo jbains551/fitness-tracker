@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import { SUPPLEMENTS } from '../lib/data.js';
 import {
   DOW_SHORT,
-  isTrainingDay,
   lastNDays,
   sumMacros,
   targetFor,
@@ -22,12 +20,6 @@ export default function Weekly({ store, now }) {
       const workout = store.state.workouts[key];
       const workoutDone = !!workout && workout.type !== 'Rest' && (workout.duration || 0) > 0;
 
-      const groups = ['morning', isTrainingDay(dow) ? 'preworkout' : null, 'afternoon', 'bedtime'].filter(Boolean);
-      const supps = store.state.supps[key] || {};
-      const allSupps = groups.flatMap((g) => SUPPLEMENTS[g]);
-      const suppDone = allSupps.filter((s) => supps[s.id]).length;
-      const suppPct = allSupps.length ? Math.round((suppDone / allSupps.length) * 100) : 0;
-
       return {
         date: d,
         key,
@@ -37,7 +29,6 @@ export default function Weekly({ store, now }) {
         proteinHit,
         workout,
         workoutDone,
-        suppPct,
         isToday: key === todayKey(now),
       };
     });
@@ -61,7 +52,6 @@ export default function Weekly({ store, now }) {
 
   const weekProteinHits = days.filter((d) => d.proteinHit).length;
   const weekWorkouts = days.filter((d) => d.workoutDone).length;
-  const avgSupp = Math.round(days.reduce((n, d) => n + d.suppPct, 0) / days.length);
 
   return (
     <div className="space-y-4">
@@ -75,10 +65,9 @@ export default function Weekly({ store, now }) {
         </p>
       </section>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Pill label="Protein hits" value={`${weekProteinHits}/7`} accent="sky" />
         <Pill label="Workouts" value={`${weekWorkouts}/7`} accent="emerald" />
-        <Pill label="Avg supps" value={`${avgSupp}%`} accent="indigo" />
       </div>
 
       <section className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm">
@@ -97,15 +86,9 @@ export default function Weekly({ store, now }) {
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-2 text-xs flex-wrap">
                   <Status ok={d.proteinHit} label={`P ${Math.round(d.totals.p)}/${d.target.p}`} />
                   <Status ok={d.workoutDone} label={d.workout ? d.workout.type : 'No workout'} />
-                </div>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-indigo-500/10 overflow-hidden">
-                    <div className="h-full bg-indigo-500 transition-[width] duration-500" style={{ width: `${d.suppPct}%` }} />
-                  </div>
-                  <span className="text-[11px] text-neutral-500 dark:text-neutral-400 w-9 text-right">{d.suppPct}%</span>
                 </div>
               </div>
             </li>
