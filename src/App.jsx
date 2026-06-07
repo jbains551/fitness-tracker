@@ -5,6 +5,7 @@ import FoodLogger from './views/FoodLogger.jsx';
 import Workout from './views/Workout.jsx';
 import Weekly from './views/Weekly.jsx';
 import Body from './views/Body.jsx';
+import Ask from './views/Ask.jsx';
 
 const TABS = [
   { id: 'dashboard', label: 'Today', icon: HomeIcon },
@@ -12,6 +13,7 @@ const TABS = [
   { id: 'workout', label: 'Workout', icon: DumbbellIcon },
   { id: 'body', label: 'Body', icon: ScaleIcon },
   { id: 'week', label: 'Week', icon: CalendarIcon },
+  { id: 'ask', label: 'Ask', icon: AskIcon },
 ];
 
 export default function App() {
@@ -51,13 +53,14 @@ export default function App() {
         {tab === 'workout' && <Workout store={store} now={now} />}
         {tab === 'body' && <Body store={store} now={now} />}
         {tab === 'week' && <Weekly store={store} now={now} />}
+        {tab === 'ask' && <Ask />}
       </main>
 
       <nav
         className="fixed bottom-0 inset-x-0 z-20 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/95 dark:bg-neutral-950/95 backdrop-blur"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="max-w-xl mx-auto grid grid-cols-5">
+        <div className="max-w-xl mx-auto grid grid-cols-6">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -119,6 +122,15 @@ function ScaleIcon() {
       <path d="M8 8h8" />
       <circle cx="12" cy="14" r="3" />
       <path d="M12 12v2l1.5 1" />
+    </svg>
+  );
+}
+function AskIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a8 8 0 11-3.5-6.6L21 4l-1 4 1 1-1.5 1.5A8 8 0 0121 12z" />
+      <path d="M9 10a3 3 0 116 0c0 2-3 2-3 4" />
+      <circle cx="12" cy="17" r="0.6" fill="currentColor" />
     </svg>
   );
 }
