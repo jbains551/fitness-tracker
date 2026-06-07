@@ -9,13 +9,20 @@ const DEFAULT_STATE = {
   body: {
     measurements: {},
     goals: { weight: '', bodyFat: '', water: '', visceral: '' },
-    settings: { weightUnit: 'lb' },
+    settings: { weightUnit: 'lb', trendDays: 30 },
   },
 };
 
 function ensureBody(s) {
-  if (s.body && s.body.measurements && s.body.goals && s.body.settings) return s;
-  return { ...s, body: { ...DEFAULT_STATE.body, ...(s.body || {}) } };
+  const incoming = s.body || {};
+  return {
+    ...s,
+    body: {
+      measurements: incoming.measurements || {},
+      goals: { ...DEFAULT_STATE.body.goals, ...(incoming.goals || {}) },
+      settings: { ...DEFAULT_STATE.body.settings, ...(incoming.settings || {}) },
+    },
+  };
 }
 
 function load() {
@@ -134,6 +141,13 @@ export function useStore() {
     });
   }, []);
 
+  const setTrendDays = useCallback((days) => {
+    setState((s) => {
+      const base = ensureBody(s);
+      return { ...base, body: { ...base.body, settings: { ...base.body.settings, trendDays: days } } };
+    });
+  }, []);
+
   return {
     state,
     addFood,
@@ -146,6 +160,7 @@ export function useStore() {
     removeMeasurement,
     setGoals,
     setWeightUnit,
+    setTrendDays,
   };
 }
 

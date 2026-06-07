@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { dayKind, targetFor, todayKey, sumMacros, clampPct } from '../lib/utils.js';
 import BodyChart from '../components/BodyChart.jsx';
+import RangeSelector from '../components/RangeSelector.jsx';
 
 export default function Dashboard({ store, now }) {
   const dow = now.getDay();
@@ -14,6 +15,7 @@ export default function Dashboard({ store, now }) {
 
   const body = store.state.body;
   const weightUnit = body.settings.weightUnit;
+  const trendDays = body.settings.trendDays || 30;
   const latestEntry = useMemo(() => {
     const dates = Object.keys(body.measurements).sort();
     if (dates.length === 0) return null;
@@ -79,6 +81,7 @@ export default function Dashboard({ store, now }) {
                 color="emerald"
                 unit={weightUnit}
                 now={now}
+                days={trendDays}
               />
               <TrendBlock
                 label="Body Fat"
@@ -88,6 +91,7 @@ export default function Dashboard({ store, now }) {
                 color="rose"
                 unit="%"
                 now={now}
+                days={trendDays}
               />
               <TrendBlock
                 label="Water"
@@ -97,6 +101,7 @@ export default function Dashboard({ store, now }) {
                 color="sky"
                 unit="%"
                 now={now}
+                days={trendDays}
               />
               <TrendBlock
                 label="Visceral Fat"
@@ -106,9 +111,13 @@ export default function Dashboard({ store, now }) {
                 color="amber"
                 unit="%"
                 now={now}
+                days={trendDays}
               />
             </div>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-3">Last 30 days · dashed line = goal</p>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-[11px] text-neutral-500 dark:text-neutral-400">dashed line = goal</span>
+              <RangeSelector value={trendDays} onChange={store.setTrendDays} />
+            </div>
           </>
         ) : (
           <p className="text-sm text-neutral-500 dark:text-neutral-400 py-2">
@@ -202,7 +211,7 @@ function StatCard({ title, value, sub, good }) {
   );
 }
 
-function TrendBlock({ label, measurements, goal, metric, color, unit, now }) {
+function TrendBlock({ label, measurements, goal, metric, color, unit, now, days }) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1">
@@ -214,7 +223,7 @@ function TrendBlock({ label, measurements, goal, metric, color, unit, now }) {
         metric={metric}
         color={color}
         unit={unit}
-        days={30}
+        days={days}
         now={now}
         height={90}
       />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import BodyChart from '../components/BodyChart.jsx';
+import RangeSelector from '../components/RangeSelector.jsx';
 import { todayKey, DOW_SHORT } from '../lib/utils.js';
 
 const METRICS = [
@@ -14,6 +15,7 @@ export default function Body({ store, now }) {
   const key = todayKey(now);
   const existing = body.measurements[key] || {};
   const unit = body.settings.weightUnit;
+  const trendDays = body.settings.trendDays || 30;
 
   const [form, setForm] = useState(() => ({
     weight: existing.weight ?? '',
@@ -144,11 +146,14 @@ export default function Body({ store, now }) {
           metric={chartMetric}
           color={METRICS.find((m) => m.key === chartMetric).color}
           unit={unitFor(chartMetric)}
-          days={30}
+          days={trendDays}
           now={now}
           height={160}
         />
-        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-2">Last 30 days</p>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[11px] text-neutral-500 dark:text-neutral-400">Last {trendDays} days</span>
+          <RangeSelector value={trendDays} onChange={store.setTrendDays} />
+        </div>
       </section>
 
       <section className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 shadow-sm">
