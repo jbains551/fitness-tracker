@@ -19,6 +19,13 @@ export function targetFor(dow) {
   return REST_TARGET;
 }
 
+export function targetForState(state, dow) {
+  const kind = dayKind(dow);
+  const t = state?.macroTargets?.[kind];
+  if (t) return t;
+  return targetFor(dow);
+}
+
 export function isTrainingDay(dow) {
   return TRAINING_DAYS.includes(dow);
 }

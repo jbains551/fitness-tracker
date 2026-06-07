@@ -2,16 +2,35 @@ import { useEffect, useState, useCallback } from 'react';
 
 const KEY = 'ft_state_v1';
 
+export const DEFAULT_MACRO_TARGETS = {
+  training: { cal: 2500, p: 170, c: 220, f: 65 },
+  rest: { cal: 2200, p: 170, c: 150, f: 70 },
+  optional: { cal: 2400, p: 170, c: 180, f: 70 },
+};
+
 const DEFAULT_STATE = {
   foods: {},
   workouts: {},
   customFoods: [],
+  macroTargets: DEFAULT_MACRO_TARGETS,
   body: {
     measurements: {},
     goals: { weight: '', bodyFat: '', water: '', visceral: '' },
     settings: { weightUnit: 'lb', trendDays: 30 },
   },
 };
+
+function ensureMacros(s) {
+  const incoming = s.macroTargets || {};
+  return {
+    ...s,
+    macroTargets: {
+      training: { ...DEFAULT_MACRO_TARGETS.training, ...(incoming.training || {}) },
+      rest: { ...DEFAULT_MACRO_TARGETS.rest, ...(incoming.rest || {}) },
+      optional: { ...DEFAULT_MACRO_TARGETS.optional, ...(incoming.optional || {}) },
+    },
+  };
+}
 
 function ensureBody(s) {
   const incoming = s.body || {};
@@ -30,7 +49,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_STATE };
     const parsed = JSON.parse(raw);
-    return ensureBody({ ...DEFAULT_STATE, ...parsed });
+    return ensureMacros(ensureBody({ ...DEFAULT_STATE, ...parsed }));
   } catch {
     return { ...DEFAULT_STATE };
   }
@@ -149,7 +168,22 @@ export function useStore() {
   }, []);
 
   const replaceState = useCallback((next) => {
-    setState(ensureBody({ ...DEFAULT_STATE, ...(next || {}) }));
+    setState(ensureMacros(ensureBody({ ...DEFAULT_STATE, ...(next || {}) })));
+  }, []);
+
+  const setMacroTargets = useCallback((next) => {
+    setState((s) => ({
+      ...s,
+      macroTargets: {
+        training: { ...DEFAULT_MACRO_TARGETS.training, ...(next.training || s.macroTargets?.training || {}) },
+        rest: { ...DEFAULT_MACRO_TARGETS.rest, ...(next.rest || s.macroTargets?.rest || {}) },
+        optional: { ...DEFAULT_MACRO_TARGETS.optional, ...(next.optional || s.macroTargets?.optional || {}) },
+      },
+    }));
+  }, []);
+
+  const resetMacroTargets = useCallback(() => {
+    setState((s) => ({ ...s, macroTargets: { ...DEFAULT_MACRO_TARGETS } }));
   }, []);
 
   return {
@@ -165,6 +199,8 @@ export function useStore() {
     setGoals,
     setWeightUnit,
     setTrendDays,
+    setMacroTargets,
+    resetMacroTargets,
     replaceState,
   };
 }

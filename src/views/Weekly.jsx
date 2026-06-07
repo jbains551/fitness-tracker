@@ -3,7 +3,7 @@ import {
   DOW_SHORT,
   lastNDays,
   sumMacros,
-  targetFor,
+  targetForState,
   todayKey,
 } from '../lib/utils.js';
 
@@ -12,7 +12,7 @@ export default function Weekly({ store, now }) {
     return lastNDays(7, now).map((d) => {
       const key = todayKey(d);
       const dow = d.getDay();
-      const target = targetFor(dow);
+      const target = targetForState(store.state, dow);
       const entries = store.state.foods[key] || [];
       const totals = sumMacros(entries);
       const proteinHit = totals.p >= target.p;
@@ -41,7 +41,7 @@ export default function Weekly({ store, now }) {
       const d = back[i];
       const k = todayKey(d);
       const entries = store.state.foods[k];
-      const target = targetFor(d.getDay());
+      const target = targetForState(store.state, d.getDay());
       const totals = sumMacros(entries || []);
       if (totals.p >= target.p) s++;
       else if (k !== todayKey(now)) break;
