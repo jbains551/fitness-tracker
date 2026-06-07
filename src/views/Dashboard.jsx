@@ -63,23 +63,52 @@ export default function Dashboard({ store, now }) {
         </div>
         {latestEntry ? (
           <>
-            <div className="grid grid-cols-4 gap-2 mb-3">
+            <div className="grid grid-cols-4 gap-2 mb-4">
               <BodyMetricCell label="Weight" value={latestEntry.m.weight} goal={goalNum(body.goals.weight)} unit={weightUnit} />
               <BodyMetricCell label="Body Fat" value={latestEntry.m.bodyFat} goal={goalNum(body.goals.bodyFat)} unit="%" />
               <BodyMetricCell label="Water" value={latestEntry.m.water} goal={goalNum(body.goals.water)} unit="%" higherIsBetter />
               <BodyMetricCell label="Visceral" value={latestEntry.m.visceral} goal={goalNum(body.goals.visceral)} unit="%" />
             </div>
-            <BodyChart
-              measurements={body.measurements}
-              goal={goalNum(body.goals.weight)}
-              metric="weight"
-              color="emerald"
-              unit={weightUnit}
-              days={30}
-              now={now}
-              height={120}
-            />
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1">Weight · last 30 days</p>
+
+            <div className="space-y-4">
+              <TrendBlock
+                label="Weight"
+                measurements={body.measurements}
+                goal={goalNum(body.goals.weight)}
+                metric="weight"
+                color="emerald"
+                unit={weightUnit}
+                now={now}
+              />
+              <TrendBlock
+                label="Body Fat"
+                measurements={body.measurements}
+                goal={goalNum(body.goals.bodyFat)}
+                metric="bodyFat"
+                color="rose"
+                unit="%"
+                now={now}
+              />
+              <TrendBlock
+                label="Water"
+                measurements={body.measurements}
+                goal={goalNum(body.goals.water)}
+                metric="water"
+                color="sky"
+                unit="%"
+                now={now}
+              />
+              <TrendBlock
+                label="Visceral Fat"
+                measurements={body.measurements}
+                goal={goalNum(body.goals.visceral)}
+                metric="visceral"
+                color="amber"
+                unit="%"
+                now={now}
+              />
+            </div>
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-3">Last 30 days · dashed line = goal</p>
           </>
         ) : (
           <p className="text-sm text-neutral-500 dark:text-neutral-400 py-2">
@@ -169,6 +198,26 @@ function StatCard({ title, value, sub, good }) {
       <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
       <p className={`mt-1 text-xl font-semibold ${good ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>{value}</p>
       <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{sub}</p>
+    </div>
+  );
+}
+
+function TrendBlock({ label, measurements, goal, metric, color, unit, now }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{label}</span>
+      </div>
+      <BodyChart
+        measurements={measurements}
+        goal={goal}
+        metric={metric}
+        color={color}
+        unit={unit}
+        days={30}
+        now={now}
+        height={90}
+      />
     </div>
   );
 }
