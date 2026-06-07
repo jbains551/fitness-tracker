@@ -35,7 +35,7 @@ export default function App() {
       <header className="sticky top-0 z-10 bg-neutral-50/80 dark:bg-neutral-950/80 backdrop-blur border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between px-4 py-3">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight">Fitness Tracker</h1>
+            <h1 className="text-lg font-semibold tracking-tight">Health Tracker</h1>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
             </p>

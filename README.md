@@ -1,4 +1,4 @@
-# Fitness Tracker
+# Health Tracker
 
 A mobile-first fitness and nutrition tracking web app. All data is stored locally in your browser — no backend, no account.
 
