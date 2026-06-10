@@ -3,6 +3,7 @@ import { useUser } from '@clerk/clerk-react';
 import { dayKind, targetForState, todayKey, sumMacros, clampPct } from '../lib/utils.js';
 import { useWeather } from '../lib/weather.js';
 import BodyChart from '../components/BodyChart.jsx';
+import MacroChart from '../components/MacroChart.jsx';
 import RangeSelector from '../components/RangeSelector.jsx';
 import MacroGoalsSheet from '../components/MacroGoalsSheet.jsx';
 
@@ -73,6 +74,19 @@ export default function Dashboard({ store, now }) {
           <MacroBar label="Protein" value={totals.p} target={target.p} unit="g" color="sky" />
           <MacroBar label="Carbs" value={totals.c} target={target.c} unit="g" color="amber" />
           <MacroBar label="Fat" value={totals.f} target={target.f} unit="g" color="rose" />
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-neutral-100 dark:border-neutral-800 space-y-4">
+          <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {trendDays}-day trend
+          </p>
+          <MacroTrend label="Calories" state={store.state} metric="cal" color="emerald" unit="" days={trendDays} now={now} />
+          <MacroTrend label="Protein" state={store.state} metric="p" color="sky" unit="g" days={trendDays} now={now} />
+          <MacroTrend label="Carbs" state={store.state} metric="c" color="amber" unit="g" days={trendDays} now={now} />
+          <MacroTrend label="Fat" state={store.state} metric="f" color="rose" unit="g" days={trendDays} now={now} />
+          <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+            dashed line = daily goal (varies by day type)
+          </p>
         </div>
       </section>
 
@@ -249,6 +263,25 @@ function TrendBlock({ label, measurements, goal, metric, color, unit, now, days 
       <BodyChart
         measurements={measurements}
         goal={goal}
+        metric={metric}
+        color={color}
+        unit={unit}
+        days={days}
+        now={now}
+        height={90}
+      />
+    </div>
+  );
+}
+
+function MacroTrend({ label, state, metric, color, unit, days, now }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{label}</span>
+      </div>
+      <MacroChart
+        state={state}
         metric={metric}
         color={color}
         unit={unit}
