@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { dayKind, targetForState, todayKey, sumMacros, clampPct } from '../lib/utils.js';
+import { useWeather } from '../lib/weather.js';
 import BodyChart from '../components/BodyChart.jsx';
 import RangeSelector from '../components/RangeSelector.jsx';
 import MacroGoalsSheet from '../components/MacroGoalsSheet.jsx';
@@ -10,6 +12,15 @@ export default function Dashboard({ store, now }) {
   const target = targetForState(store.state, dow);
   const kind = dayKind(dow);
   const [goalsOpen, setGoalsOpen] = useState(false);
+  const { user } = useUser();
+  const weather = useWeather();
+
+  const displayName =
+    user?.firstName ||
+    user?.fullName?.split(' ')?.[0] ||
+    user?.username ||
+    user?.primaryEmailAddress?.emailAddress?.split('@')?.[0] ||
+    'there';
 
   const entries = store.state.foods[key] || [];
   const totals = useMemo(() => sumMacros(entries), [entries]);
@@ -33,6 +44,18 @@ export default function Dashboard({ store, now }) {
   return (
     <div className="space-y-4">
       <MacroGoalsSheet open={goalsOpen} onClose={() => setGoalsOpen(false)} store={store} />
+
+      <section>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Hello, {displayName}
+        </h1>
+        {weather.tempF != null && (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 tabular-nums">
+            {weather.tempF}°F{weather.city ? ` · ${weather.city}` : ''}
+          </p>
+        )}
+      </section>
+
       <DayBadge kind={kind} />
 
       <section className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 shadow-sm">
