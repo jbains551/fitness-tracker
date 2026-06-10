@@ -33,12 +33,36 @@ async function reverseGeocode(lat, lon) {
 
 async function fetchTemp(lat, lon) {
   const res = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m&temperature_unit=fahrenheit`
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`
   );
   if (!res.ok) throw new Error(`wx ${res.status}`);
   const j = await res.json();
   const t = j?.current?.temperature_2m;
-  return typeof t === 'number' ? Math.round(t) : null;
+  const code = j?.current?.weather_code;
+  return {
+    tempF: typeof t === 'number' ? Math.round(t) : null,
+    condition: typeof code === 'number' ? wmoLabel(code) : null,
+  };
+}
+
+function wmoLabel(code) {
+  if (code === 0) return 'Clear';
+  if (code === 1) return 'Mostly clear';
+  if (code === 2) return 'Partly cloudy';
+  if (code === 3) return 'Overcast';
+  if (code === 45 || code === 48) return 'Fog';
+  if (code >= 51 && code <= 57) return 'Drizzle';
+  if (code === 61 || code === 80) return 'Light rain';
+  if (code === 63 || code === 81) return 'Rain';
+  if (code === 65 || code === 82) return 'Heavy rain';
+  if (code === 66 || code === 67) return 'Freezing rain';
+  if (code === 71 || code === 85) return 'Light snow';
+  if (code === 73) return 'Snow';
+  if (code === 75 || code === 86) return 'Heavy snow';
+  if (code === 77) return 'Snow grains';
+  if (code === 95) return 'Thunderstorm';
+  if (code === 96 || code === 99) return 'Thunderstorm w/ hail';
+  return null;
 }
 
 export function useWeather() {
@@ -66,7 +90,7 @@ export function useWeather() {
         try {
           const { latitude, longitude } = pos.coords;
           const haveFreshCity = cached?.cityAt && now - cached.cityAt < LOC_TTL_MS && cached.city;
-          const [city, tempF] = await Promise.all([
+          const [city, wx] = await Promise.all([
             haveFreshCity ? Promise.resolve(cached.city) : reverseGeocode(latitude, longitude),
             fetchTemp(latitude, longitude),
           ]);
@@ -74,7 +98,8 @@ export function useWeather() {
           const next = {
             city,
             cityAt: haveFreshCity ? cached.cityAt : Date.now(),
-            tempF,
+            tempF: wx.tempF,
+            condition: wx.condition,
             tempAt: Date.now(),
           };
           writeCache(next);

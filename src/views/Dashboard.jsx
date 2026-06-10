@@ -52,7 +52,9 @@ export default function Dashboard({ store, now }) {
         </h1>
         {weather.tempF != null && (
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 tabular-nums">
-            {weather.tempF}°F{weather.city ? ` · ${weather.city}` : ''}
+            {weather.tempF}°F
+            {weather.condition ? ` · ${weather.condition}` : ''}
+            {weather.city ? ` · ${weather.city}` : ''}
           </p>
         )}
       </section>
