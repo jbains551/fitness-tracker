@@ -54,16 +54,20 @@ export default function BodyChart({
   const xFor = (i) => padL + (i / (series.length - 1 || 1)) * innerW;
   const yFor = (v) => padT + (1 - (v - min) / range) * innerH;
 
+  // Forward-fill: carry the last measurement forward to today so the
+  // chart always looks like a continuous line, even with sparse data.
+  let lastVal = null;
+  const filled = series.map((p) => {
+    if (p.value != null) lastVal = p.value;
+    return { ...p, lineValue: lastVal };
+  });
+
   let path = '';
-  let prevHadValue = false;
-  series.forEach((p, i) => {
-    if (p.value == null) {
-      prevHadValue = false;
-      return;
-    }
-    const cmd = prevHadValue ? 'L' : 'M';
-    path += `${cmd}${xFor(i).toFixed(1)},${yFor(p.value).toFixed(1)} `;
-    prevHadValue = true;
+  let started = false;
+  filled.forEach((p, i) => {
+    if (p.lineValue == null) return;
+    path += `${started ? 'L' : 'M'}${xFor(i).toFixed(1)},${yFor(p.lineValue).toFixed(1)} `;
+    started = true;
   });
 
   const stroke = {
