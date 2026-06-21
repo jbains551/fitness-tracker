@@ -89,6 +89,7 @@ export default function BodyChart({
   const latest = points[points.length - 1];
   const first = points[0];
   const delta = latest.value - first.value;
+  const goalDelta = hasGoal ? latest.value - goal : null;
 
   return (
     <div>
@@ -99,13 +100,29 @@ export default function BodyChart({
           </span>
           <span className="ml-1 text-xs text-neutral-500 dark:text-neutral-400">{unit}</span>
         </div>
-        <div className="text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-          {hasGoal && (
-            <>goal {goal}{unit} · </>
+        <div className="text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+          {hasGoal ? (
+            <div className="mb-0.5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                <span className="h-px w-4 border-t-2 border-dashed border-neutral-500 dark:border-neutral-300" />
+                Goal {goal}{unit}
+              </span>
+            </div>
+          ) : (
+            <div className="mb-0.5">
+              <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                Set a goal
+              </span>
+            </div>
           )}
           {points.length > 1 && (
             <span className={delta === 0 ? '' : delta > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}>
               {delta > 0 ? '+' : ''}{delta.toFixed(1)} over {points.length} pts
+            </span>
+          )}
+          {hasGoal && (
+            <span className="block">
+              {goalDelta === 0 ? 'at goal' : `${goalDelta > 0 ? '+' : ''}${goalDelta.toFixed(1)}${unit} vs goal`}
             </span>
           )}
         </div>
@@ -123,16 +140,24 @@ export default function BodyChart({
               x2={W - padR}
               y1={yFor(goal)}
               y2={yFor(goal)}
-              className="stroke-neutral-400 dark:stroke-neutral-500"
-              strokeWidth="1"
-              strokeDasharray="4 4"
+              className="stroke-neutral-500 dark:stroke-neutral-300"
+              strokeWidth="2"
+              strokeDasharray="8 6"
+            />
+            <circle
+              cx={W - padR}
+              cy={yFor(goal)}
+              r="3.5"
+              className="fill-white stroke-neutral-500 dark:fill-neutral-900 dark:stroke-neutral-300"
+              strokeWidth="2"
             />
             <text
               x={W - padR - 2}
-              y={yFor(goal) - 4}
+              y={Math.max(11, yFor(goal) - 6)}
               textAnchor="end"
-              className="fill-neutral-500 dark:fill-neutral-400"
-              fontSize="10"
+              className="fill-neutral-700 dark:fill-neutral-200"
+              fontSize="11"
+              fontWeight="600"
             >
               goal {goal}{unit}
             </text>
@@ -143,7 +168,7 @@ export default function BodyChart({
           d={path}
           fill="none"
           className={stroke}
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
