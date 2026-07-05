@@ -3,9 +3,10 @@ import { getUserIdFromRequest } from './_clerk.js';
 
 export const config = { runtime: 'nodejs' };
 
-// Vision-capable model. Swap to 'anthropic/claude-sonnet-5' for stronger food
-// recognition at higher cost/latency.
-const MODEL = 'anthropic/claude-haiku-4-5';
+// Vision-capable model. Sonnet gives stronger food recognition and portion
+// reasoning than Haiku, at higher cost/latency. Swap back to
+// 'anthropic/claude-haiku-4-5' if speed/cost matters more than accuracy.
+const MODEL = 'anthropic/claude-sonnet-5';
 
 const SYSTEM_PROMPT = `You are a nutrition estimation assistant. Given a photo of a meal, identify each distinct food/drink item and estimate its macronutrients.
 
