@@ -13,5 +13,16 @@
     { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
     { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
     { "src": "/icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log meal from photo",
+      "short_name": "Photo macros",
+      "description": "Snap a meal and estimate its macros",
+      "url": "/?open=photo",
+      "icons": [
+        { "src": "/shortcut-photo-96.png", "type": "image/png", "sizes": "96x96", "purpose": "any" }
+      ]
+    }
   ]
 }

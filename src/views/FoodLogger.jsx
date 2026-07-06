@@ -3,11 +3,11 @@ import { useAuth } from '@clerk/clerk-react';
 import { QUICK_FOODS, MEALS } from '../lib/data.js';
 import { todayKey, uid } from '../lib/utils.js';
 
-export default function FoodLogger({ store, now }) {
+export default function FoodLogger({ store, now, initialTab }) {
   const key = todayKey(now);
   const entries = store.state.foods[key] || [];
   const [meal, setMeal] = useState('breakfast');
-  const [tab, setTab] = useState('quick');
+  const [tab, setTab] = useState(initialTab || 'quick');
 
   const grouped = useMemo(() => {
     const g = {};
