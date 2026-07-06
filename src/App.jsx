@@ -22,13 +22,29 @@ export default function App() {
   const store = useStore();
   const { theme, toggle } = useTheme();
   const sync = useSync({ store });
-  const [tab, setTab] = useState('dashboard');
+  // Home-screen shortcuts deep-link via ?open=… (e.g. the "Log meal from photo"
+  // shortcut opens the Food view with the Photo tab pre-selected).
+  const [tab, setTab] = useState(() => (readOpenParam() === 'photo' ? 'food' : 'dashboard'));
+  const [foodInitialTab, setFoodInitialTab] = useState(() =>
+    readOpenParam() === 'photo' ? 'photo' : null
+  );
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // Consume the deep-link once: strip the query param so a refresh or manual
+  // navigation back to Food starts on the default tab, not Photo.
+  useEffect(() => {
+    if (foodInitialTab) {
+      try {
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {}
+      setFoodInitialTab(null);
+    }
+  }, [foodInitialTab]);
 
   return (
     <div className="min-h-full flex flex-col max-w-xl mx-auto">
@@ -61,7 +77,7 @@ export default function App() {
 
       <main className="flex-1 px-4 pt-4 pb-32">
         {tab === 'dashboard' && <Dashboard store={store} now={now} />}
-        {tab === 'food' && <FoodLogger store={store} now={now} />}
+        {tab === 'food' && <FoodLogger store={store} now={now} initialTab={foodInitialTab} />}
         {tab === 'workout' && <Workout store={store} now={now} />}
         {tab === 'body' && <Body store={store} now={now} />}
         {tab === 'week' && <Weekly store={store} now={now} />}
@@ -96,6 +112,14 @@ export default function App() {
       </nav>
     </div>
   );
+}
+
+function readOpenParam() {
+  try {
+    return new URLSearchParams(window.location.search).get('open');
+  } catch {
+    return null;
+  }
 }
 
 function HomeIcon() {
